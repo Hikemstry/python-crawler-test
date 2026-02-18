@@ -3,15 +3,17 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 from tool import FFmpegTool
 import os
-
+"""目前可以下载电视剧一个季的所有内容，至于所有季自动下载...(懒。。。)"""
 for page in range(1,14,1):
     
     """episode_dir = rf"D:/image/video/纸牌屋/第二季第{page}集"
     os.makedirs(episode_dir, exist_ok=True)"""
-    
+    """可以用来创建相应文件夹保存相应的电视剧"""
     episode_dir="D:/image/video/纸牌屋/"
     
+    """文件夹可以自行创建并添加到episode_dir中,为电视剧保存的地方"""
     url=f"https://mjsky.cc/bfang/48750-1-{page}.html"
+    """对应网站第一集的url"""
     resp1=requests.get(url)
 
     obj1=re.compile(r",\"vod_class\":\".*?\"\},\"url\":\"(?P<first_m3u8>.*?)\",\"url_next\":\".*?\",")
@@ -47,6 +49,7 @@ for page in range(1,14,1):
     count=0
             
     with open(f"D:/image/video/{name}.m3u8",mode="wb") as f:
+        """"m3u8文件保存,与54行地址一致,可自行修改"""
         f.write(resp3.content)
     with open(f"D:/image/video/{name}.m3u8",mode="r") as t:
         for line in t:
@@ -76,7 +79,7 @@ for page in range(1,14,1):
         
     print(f"{name} all ts downloaded! ")
     print("----------------------------------")
-    
+    """引用ffmpegtool,源代码来自tool,参考tool.py"""
     tool=FFmpegTool()
     tool.merge_ts(rf"{episode_dir}", output_name=f"{name}.mp4", delete_source=True)   
     

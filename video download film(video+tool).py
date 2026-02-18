@@ -3,6 +3,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor
 
 url="https://mjsky.cc/bfang/146603-1-1.html"
+"""url为该电影页面的网址"""
 dic={"user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 Edg/145.0.0.0"}
 
 obj=re.compile(r"<script type=\"text/javascript\">.*?\"url\":\"(?P<urll>.*?)\",",re.S)
@@ -13,6 +14,7 @@ resp=requests.get(url,headers=dic)
 
 m3u8=obj.finditer(resp.text)
 title=obj2.finditer(resp.text)
+"""拿名字"""
 tags=obj3.finditer(resp.text)
 
 
@@ -27,6 +29,7 @@ for j in tags:
    
 
 with open(f"D:/image/video/{name}.m3u8",mode="wb") as f:
+        """电影m3u8保存,可自行修改,但需要与43行地址相同!"""
         f.write(respp.content)
         
 resp.close()
@@ -52,6 +55,7 @@ def dl(i):
         
         resppp=requests.get(urlll[i])
         with open(f"D:/image/video/{name}/{linedic[i]}",mode="wb") as k:
+            """电影保存的地方"""
             k.write(resppp.content)
         print(f"{linedic[i]} completed!")
         resppp.close()
@@ -62,6 +66,7 @@ with ThreadPoolExecutor(16) as t:
 print("all ts downloaded!")
 print("-----------------------------------------")
 
+"""引用ffmpegtool,源代码来自tool,参考tool.py"""
 from tool import FFmpegTool
 tool=FFmpegTool()
 tool.merge_ts(rf"D:/image/video/{name}", output_name=f"{name}.mp4", delete_source=True)

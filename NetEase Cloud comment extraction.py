@@ -40,6 +40,7 @@ i = "Cze1O0OVnyI102sB"
 x=y=1
 cursor=-1
 for page in range(1,11,1):
+    """获取评论的页数"""
     data = {
             "csrf_token": "ae11f2c6709b55bde4de7d71cd952940",
             "cursor": f"{cursor}",
@@ -49,6 +50,7 @@ for page in range(1,11,1):
             "pageSize": "20",  
             "rid": "R_SO_4_185904", 
             "threadId": "R_SO_4_185904" 
+            """rid和threadId是对应歌手的,可以通过搜索歌手获取"""
         }
     url = "https://music.163.com/weapi/comment/resource/comments/get?csrf_token="
     resp = requests.post(url, data={"params": get_params(data),

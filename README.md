@@ -25,3 +25,5 @@ video download film(video+tool)（电影下载）
 video download soap(video+tool)（电视剧下载）
 
 words translation（单词翻译）
+
+Sakura Anime film（樱花动漫下载，调用hls_decryptor+download_hls 实现自动拼接CDS，获取enc.key破解AES-128加密）

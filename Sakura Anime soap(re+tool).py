@@ -3,11 +3,12 @@ import requests
 import re
 
 """ Select Soap to Download """
-for t in range(1, 2):
-    url=f"https://www.yinghuadongman.com.cn/v/26878-1-{t}/"
-    tag="https://vv.jisuzyv.com"
-    headers={"user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0",
+tag="https://vv.jisuzyv.com"
+headers={"user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0",
             "referer":"https://www.shankubf.com/"}
+
+for t in range(6, 31):
+    url=f"https://www.yinghuadongman.com.cn/v/45094-1-{t}/"
 
     resp1=requests.get(url)
 
@@ -24,7 +25,7 @@ for t in range(1, 2):
         name=j.group("name")
         name=re.sub(r"[\/:*?\"<>|]","",name)
 
-    resp2=requests.get(m3u8_first_url)
+    resp2=requests.get(m3u8_first_url,verify=False)
     for line in resp2.text.splitlines():
         if line.startswith("#"):
             continue
@@ -38,4 +39,4 @@ for t in range(1, 2):
     from download_hls import HLS_Downloader
     t=HLS_Downloader()
     t.getinfo(M3U8_URL=m3u8_second_url,VIDEO_NAME=name,HEADERS=headers)
-    t.run(max_workers=15)
+    t.run(max_workers=15,manual_key_url_output=enc_key)

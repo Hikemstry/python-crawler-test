@@ -10,11 +10,10 @@ import urllib3
 from concurrent.futures import ThreadPoolExecutor
 from hls_decryptor import HLSDecryptor
 
-# 禁用不安全请求警告
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 class HLS_Downloader:
-        
-    def getinfo(self,M3U8_URL,VIDEO_NAME,HEADERS):
+
+    def getinfo(self,M3U8_URL,VIDEO_NAME,HEADERS,):
         self.M3U8_URL = M3U8_URL
         self.VIDEO_NAME = VIDEO_NAME 
         self.WORK_DIR = f"D:/image/video/EVA/{VIDEO_NAME}" 
@@ -41,7 +40,6 @@ class HLS_Downloader:
                 with open(out_path, 'wb') as f:
                     f.write(decrypted_data)
 
-                # 验证TS头（应为0x47）
                 if len(decrypted_data) >= 4:
                     if decrypted_data[0] == 0x47:
                         print(f"[{i+1}/{len(decryptor.segments)}]-TS头正确(0x47)-尝试:{attempt+1}")
@@ -59,7 +57,7 @@ class HLS_Downloader:
                 else:
                     time.sleep(2)
 
-    def run(self,max_workers):
+    def run(self,max_workers,manual_key_url_output=None,ask_for_delete_ts=True):
         print("正在获取m3u8文件...")
         try:
             decryptor = HLSDecryptor.from_url(self.M3U8_URL, headers=self.HEADERS)
@@ -71,29 +69,32 @@ class HLS_Downloader:
         print(f"片段数量:{len(decryptor.segments)}")
 
         if decryptor.method == 'AES-128':
-            print("检测到 AES-128 加密")
-            choice = input("是否手动输入密钥 URL? (y/n, 默认 n):").strip().lower()
-            if choice == 'y':
-                manual_key_url = input("请输入完整的密钥URL:").strip()
-                try:
-                    decryptor.download_key(manual_key_url=manual_key_url, headers=self.HEADERS)
-                    print("密钥下载成功")
-                except Exception as e:
-                    print(f"密钥下载失败:{e}")
-                    return
+            if manual_key_url_output:
+                decryptor.download_key(manual_key_url=manual_key_url_output, headers=self.HEADERS)
+                print("密钥下载成功")
             else:
-                try:
-                    decryptor.download_key(headers=self.HEADERS)
-                    print("密钥自动下载成功")
-                except Exception as e:
-                    print(f"自动下载密钥失败: {e}")
-                    retry = input("是否手动输入密钥 URL? (y/n):").strip().lower()
-                    if retry == 'y':
-                        manual_key_url = input("请输入完整的密钥URL:").strip()
+                choice = input("是否手动输入密钥 URL? (y/n, 默认 n):").strip().lower()
+                if choice == 'y':
+                    manual_key_url = input("请输入完整的密钥URL:").strip()
+                    try:
                         decryptor.download_key(manual_key_url=manual_key_url, headers=self.HEADERS)
                         print("密钥下载成功")
-                    else:
+                    except Exception as e:
+                        print(f"密钥下载失败:{e}")
                         return
+                else:
+                    try:
+                        decryptor.download_key(headers=self.HEADERS)
+                        print("密钥自动下载成功")
+                    except Exception as e:
+                        print(f"自动下载密钥失败: {e}")
+                        retry = input("是否手动输入密钥 URL? (y/n):").strip().lower()
+                        if retry == 'y':
+                            manual_key_url = input("请输入完整的密钥URL:").strip()
+                            decryptor.download_key(manual_key_url=manual_key_url, headers=self.HEADERS)
+                            print("密钥下载成功")
+                        else:
+                            return
 
             print(f"密钥长度: {len(decryptor.key)} 字节")
             print(f"密钥: {decryptor.key.hex()}")
@@ -144,14 +145,19 @@ class HLS_Downloader:
             import subprocess
             subprocess.run(cmd, check=True)
             print(f"合并成功！输出文件: {output_mp4}")
-
-            confirm = input("是否删除临时 TS 文件夹？(y/n): ").strip().lower()
-            if confirm == 'y':
+            
+            if ask_for_delete_ts:
                 import shutil
                 shutil.rmtree(self.TS_DIR)
-                print("临时文件夹已删除")
+                print("自动删除临时 TS 文件夹")
             else:
-                print("保留临时文件")
+                confirm = input("是否删除临时 TS 文件夹？(y/n): ").strip().lower()
+                if confirm == 'y':
+                    import shutil
+                    shutil.rmtree(self.TS_DIR)
+                    print("已删除临时 TS 文件夹")
+                else:
+                    print("保留临时文件")
 
         except subprocess.CalledProcessError as e:
             print(f"concat demuxer合并失败:{e}")

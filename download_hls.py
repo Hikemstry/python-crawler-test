@@ -9,14 +9,17 @@ import requests
 import urllib3
 from concurrent.futures import ThreadPoolExecutor
 from hls_decryptor import HLSDecryptor
+import colorama
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 class HLS_Downloader:
+    HEADERS = {"user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0",
+               "referer":""}
 
-    def getinfo(self,M3U8_URL,VIDEO_NAME,HEADERS,):
+    def getinfo(self,M3U8_URL,VIDEO_NAME,WORK_DIR,HEADERS):
         self.M3U8_URL = M3U8_URL
         self.VIDEO_NAME = VIDEO_NAME 
-        self.WORK_DIR = f"D:/image/video/EVA/{VIDEO_NAME}" 
+        self.WORK_DIR = WORK_DIR
         self.TS_DIR = os.path.join(self.WORK_DIR, "ts")    
         os.makedirs(self.TS_DIR, exist_ok=True)
         self.HEADERS = HEADERS
@@ -46,23 +49,28 @@ class HLS_Downloader:
                     else:
                         print(f"[{i+1}/{len(decryptor.segments)}]-TS头错误:0x{decrypted_data[0]:02x}{decrypted_data[1]:02x}{decrypted_data[2]:02x}{decrypted_data[3]:02x} - 尝试{attempt+1}")
                 else:
-                    print(f"[{i+1}/{len(decryptor.segments)}]-文件太小,无法验证-尝试:{attempt+1}")
+                    print(f"{colorama.Fore.YELLOW} [{i+1}/{len(decryptor.segments)}]-文件太小,无法验证-尝试:{attempt+1}{colorama.Fore.RESET}")
 
                 return True
             except Exception as e:
-                print(f"[{i+1}/{len(decryptor.segments)}] 尝试 {attempt+1} 失败: {e}")
+                print(f"{colorama.Fore.YELLOW} [{i+1}/{len(decryptor.segments)}] 尝试 {attempt+1} 失败: {e}{colorama.Fore.RESET}")
                 if attempt == max_retries - 1:
-                    print(f"[{i+1}]超过最大重试次数,放弃")
+                    print(f"{colorama.Fore.RED} [{i+1}]超过最大重试次数,放弃{colorama.Fore.RESET}")
                     return False
                 else:
                     time.sleep(2)
 
-    def run(self,max_workers,manual_key_url_output=None,ask_for_delete_ts=True):
+    def run(self,max_workers,manual_key_url_output,del_ts):
+  
+        self.max_workers = max_workers
+        self.manual_key_url_output = manual_key_url_output
+        self.del_ts = del_ts
+        
         print("正在获取m3u8文件...")
         try:
             decryptor = HLSDecryptor.from_url(self.M3U8_URL, headers=self.HEADERS)
         except Exception as e:
-            print(f"获取m3u8失败:{e}")
+            print(f"{colorama.Fore.RED}获取m3u8失败:{e}{colorama.Fore.RESET}")
             return
 
         print(f"加密方式:{decryptor.method}")
@@ -71,39 +79,33 @@ class HLS_Downloader:
         if decryptor.method == 'AES-128':
             if manual_key_url_output:
                 decryptor.download_key(manual_key_url=manual_key_url_output, headers=self.HEADERS)
-                print("密钥下载成功")
+                print(f"{colorama.Fore.GREEN}密钥下载成功{colorama.Fore.RESET}")
+                
             else:
-                choice = input("是否手动输入密钥 URL? (y/n, 默认 n):").strip().lower()
-                if choice == 'y':
-                    manual_key_url = input("请输入完整的密钥URL:").strip()
-                    try:
-                        decryptor.download_key(manual_key_url=manual_key_url, headers=self.HEADERS)
-                        print("密钥下载成功")
-                    except Exception as e:
-                        print(f"密钥下载失败:{e}")
-                        return
-                else:
-                    try:
-                        decryptor.download_key(headers=self.HEADERS)
-                        print("密钥自动下载成功")
-                    except Exception as e:
-                        print(f"自动下载密钥失败: {e}")
-                        retry = input("是否手动输入密钥 URL? (y/n):").strip().lower()
-                        if retry == 'y':
+                try:
+                    decryptor.download_key(headers=self.HEADERS)
+                    print(f"{colorama.Fore.GREEN}密钥自动下载成功{colorama.Fore.RESET}")
+                except Exception as e:
+                    print(f"{colorama.Fore.RED}自动下载密钥失败: {e}{colorama.Fore.RESET}")
+                    retry = input(f"{colorama.Fore.YELLOW}是否手动输入密钥 URL? (y/n):{colorama.Fore.RESET}").strip().lower()
+                    if retry == 'y':
+                        try:
                             manual_key_url = input("请输入完整的密钥URL:").strip()
                             decryptor.download_key(manual_key_url=manual_key_url, headers=self.HEADERS)
-                            print("密钥下载成功")
-                        else:
+                            print(f"{colorama.Fore.GREEN}密钥下载成功{colorama.Fore.RESET}")
+                        except Exception as e:
+                            print(f"{colorama.Fore.RED}密钥下载失败:{e}{colorama.Fore.RESET}")
                             return
-
+                        
             print(f"密钥长度: {len(decryptor.key)} 字节")
             print(f"密钥: {decryptor.key.hex()}")
             if decryptor.iv:
                 print(f"IV:{decryptor.iv.hex()}")
             else:
                 print("IV:使用片段序号生成")
+            
         else:
-            print("无加密或加密方式不支持，将直接下载")
+            print(f"{colorama.Fore.YELLOW}无加密或加密方式不支持，将直接下载{colorama.Fore.RESET}")
 
         print("\n开始下载并解密 TS 片段...")
         success_count = 0
@@ -117,10 +119,10 @@ class HLS_Downloader:
                 if future.result():
                     success_count += 1
 
-        print(f"\n下载完成: 成功 {success_count}/{len(decryptor.segments)} 个片段")
+        print(f"\n{colorama.Fore.GREEN}下载完成: 成功 {success_count}/{len(decryptor.segments)} 个片段{colorama.Fore.RESET}")
 
         if success_count == 0:
-            print("没有成功下载任何片段，退出")
+            print(f"{colorama.Fore.RED}没有成功下载任何片段，退出{colorama.Fore.RESET}")
             return
 
         print("\n开始合并视频...")
@@ -144,24 +146,18 @@ class HLS_Downloader:
             print("执行命令:", " ".join(cmd))
             import subprocess
             subprocess.run(cmd, check=True)
-            print(f"合并成功！输出文件: {output_mp4}")
+            print(f"{colorama.Fore.GREEN}合并成功！输出文件: {output_mp4}{colorama.Fore.RESET}")
             
-            if ask_for_delete_ts:
+            if self.del_ts:
                 import shutil
                 shutil.rmtree(self.TS_DIR)
-                print("自动删除临时 TS 文件夹")
+                print(f"{colorama.Fore.YELLOW}已自动删除临时TS文件夹{colorama.Fore.RESET}")
             else:
-                confirm = input("是否删除临时 TS 文件夹？(y/n): ").strip().lower()
-                if confirm == 'y':
-                    import shutil
-                    shutil.rmtree(self.TS_DIR)
-                    print("已删除临时 TS 文件夹")
-                else:
-                    print("保留临时文件")
+                print(f"{colorama.Fore.YELLOW}已保留临时TS文件{colorama.Fore.RESET}")
 
         except subprocess.CalledProcessError as e:
-            print(f"concat demuxer合并失败:{e}")
-            print("\n尝试备用方法:直接合并所有TS文件(需要先进入 TS 目录)...")
+            print(f"{colorama.Fore.RED}concat demuxer合并失败:{e}{colorama.Fore.RESET}")
+            print(f"{colorama.Fore.YELLOW}\n尝试备用方法:直接合并所有TS文件(需要先进入 TS 目录)...{colorama.Fore.RESET}")
             try:
                 # 切换到 TS 目录
                 os.chdir(self.TS_DIR)
@@ -172,21 +168,21 @@ class HLS_Downloader:
                     "ffmpeg", "-i", "output_temp.ts", "-c", "copy",
                     os.path.join(self.WORK_DIR, f"{self.VIDEO_NAME}.mp4")
                 ], check=True)
-                print(f"备用合并成功！输出文件: {output_mp4}")
+                print(f"{colorama.Fore.GREEN}备用合并成功！输出文件: {output_mp4}{colorama.Fore.RESET}")
                 os.remove("output_temp.ts")
 
-                confirm = input("是否删除临时 TS 文件夹？(y/n): ").strip().lower()
-                if confirm == 'y':
+                if self.del_ts:
                     import shutil
                     shutil.rmtree(self.TS_DIR)
-                    print("临时文件夹已删除")
+                    print(f"{colorama.Fore.YELLOW}已自动删除临时TS文件夹{colorama.Fore.RESET}")
                 else:
-                    print("保留临时文件")
+                    print(f"{colorama.Fore.YELLOW}已保留临时TS文件{colorama.Fore.RESET}")
+                
 
             except Exception as e2:
-                print(f"备用合并也失败: {e2}")
-                print("请手动合并 TS 文件：")
-                print(f"1. 进入目录: {self.TS_DIR}")
-                print("2. 执行: copy /b segment_*.ts output.ts")
-                print("3. 然后: ffmpeg -i output.ts -c copy \"../{VIDEO_NAME}.mp4\"")
+                print(f"{colorama.Fore.RED}备用合并也失败: {e2}{colorama.Fore.RESET}")
+                print(f"{colorama.Fore.YELLOW}请手动合并 TS 文件：{colorama.Fore.RESET}")
+                print(f"{colorama.Fore.YELLOW}1. 进入目录: {self.TS_DIR}{colorama.Fore.RESET}")
+                print(f"{colorama.Fore.YELLOW}2. 执行: copy /b segment_*.ts output.ts{colorama.Fore.RESET}")
+                print(f"{colorama.Fore.YELLOW}3. 然后: ffmpeg -i output.ts -c copy \"../{self.VIDEO_NAME}.mp4\"{colorama.Fore.RESET}")
 

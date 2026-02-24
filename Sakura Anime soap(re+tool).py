@@ -1,14 +1,15 @@
 from playwright.sync_api import sync_playwright
 import requests
 import re
+import colorama
 
 """ Select Soap to Download """
 tag="https://vv.jisuzyv.com"
 headers={"user-agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0",
-            "referer":"https://www.shankubf.com/"}
+         "referer":"https://www.shankubf.com/"}
 
-for t in range(6, 31):
-    url=f"https://www.yinghuadongman.com.cn/v/45094-1-{t}/"
+for t in range(23,24):
+    url=f"https://www.yinghuadongman.com.cn/v/43032-1-{t}/"
 
     resp1=requests.get(url)
 
@@ -34,9 +35,9 @@ for t in range(6, 31):
     m3u8_second_url=tag+part_second_m3u8  
 
     enc_key=m3u8_second_url.strip("index.m3u8")+"enc.key"
-    print(f"Automatically Generated ENC.KEY_URL:\n{enc_key}")
+    print(f"{colorama.Fore.BLUE}Automatically Generated ENC.KEY_URL:\n{enc_key}{colorama.Fore.RESET}")
 
     from download_hls import HLS_Downloader
     t=HLS_Downloader()
-    t.getinfo(M3U8_URL=m3u8_second_url,VIDEO_NAME=name,HEADERS=headers)
-    t.run(max_workers=15,manual_key_url_output=enc_key)
+    t.getinfo(M3U8_URL=m3u8_second_url,VIDEO_NAME=name,WORK_DIR=f"D:/image/video/夏日重现/{name}",HEADERS=headers)
+    t.run(max_workers=100,manual_key_url_output=enc_key)

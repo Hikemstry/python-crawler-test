@@ -10,8 +10,8 @@ from urllib.parse import urljoin
 import requests
 import urllib3
 from Crypto.Cipher import AES
+import colorama
 
-# 禁用不安全请求警告
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class HLSDecryptor:
@@ -48,8 +48,8 @@ class HLSDecryptor:
                 if uri_match:
                     self.key_uri = uri_match.group(1)
                 if iv_match:
-                    iv_hex = iv_match.group(1)[2:]  # 去掉 0x
-                    # 补足偶数长度
+                    iv_hex = iv_match.group(1)[2:]  
+                    
                     if len(iv_hex) % 2 != 0:
                         iv_hex = '0' + iv_hex
                     self.iv = binascii.unhexlify(iv_hex)
@@ -64,7 +64,7 @@ class HLSDecryptor:
                         if self.base_url:
                             seg_uri = urljoin(self.base_url, seg_uri)
                         else:
-                            raise ValueError("相对路径片段需要提供base_url")
+                            raise ValueError(f"{colorama.Fore.RED}相对路径片段需要提供base_url{colorama.Fore.RESET}")
                     self.segments.append(seg_uri)
 
         if not self.segments:
@@ -80,12 +80,7 @@ class HLSDecryptor:
         return self
 
     def download_key(self, manual_key_url=None, headers=None):
-        """
-        下载密钥文件
-        :param manual_key_url: 手动指定的密钥 URL(若提供则忽略解析出的 key_uri)
-        :param headers: 请求头字典（可选，用于防盗链等）
-        :return: 密钥二进制数据
-        """
+        
         if manual_key_url:
             url = manual_key_url
         elif self.key_uri:
@@ -93,10 +88,10 @@ class HLSDecryptor:
                 url = self.key_uri
             else:
                 if not self.base_url:
-                    raise ValueError("密钥为相对路径，需要提供 base_url")
+                    raise ValueError(f"{colorama.Fore.RED}密钥为相对路径，需要提供 base_url{colorama.Fore.RESET}")
                 url = urljoin(self.base_url, self.key_uri)
         else:
-            raise ValueError("没有密钥信息可下载，且未提供 manual_key_url")
+            raise ValueError(f"{colorama.Fore.RED}没有密钥信息可下载，且未提供 manual_key_url{colorama.Fore.RESET}")
 
         resp = requests.get(url, headers=headers or {}, verify=False)
         resp.raise_for_status()
@@ -105,15 +100,12 @@ class HLSDecryptor:
 
     def decrypt_segment(self, encrypted_data, segment_index=None):
         """
-        解密单个 TS 片段数据
         :param encrypted_data: 加密的 TS 片段二进制数据
         :param segment_index: 片段索引(从0开始)，用于生成 IV(如果 m3u8 未指定 IV)
-        :return: 解密后的二进制数据（已去除填充）
         """
         if not self.key:
-            raise ValueError("请先调用download_key()获取密钥")
+            raise ValueError(f"{colorama.Fore.RED}请先调用download_key()获取密钥{colorama.Fore.RESET}")
 
-        # 确定 IV
         if self.iv:
             iv = self.iv
         else:
@@ -132,12 +124,7 @@ class HLSDecryptor:
 
     @classmethod
     def from_url(cls, m3u8_url, headers=None):
-        """
-        从 m3u8 URL 创建实例并自动解析
-        :param m3u8_url: m3u8 文件的完整 URL
-        :param headers: 请求头字典（可选）
-        :return: HLSDecryptor 实例
-        """
+ 
         resp = requests.get(m3u8_url, headers=headers or {}, verify=False)
         resp.raise_for_status()
         content = resp.text

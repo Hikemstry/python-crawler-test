@@ -1,7 +1,7 @@
 import requests
 import re
 from concurrent.futures import ThreadPoolExecutor
-from tool import FFmpegTool
+from ffmpegtool import FFmpegTool
 import os
 """目前可以下载电视剧一个季的所有内容，至于所有季自动下载...(懒。。。)"""
 for page in range(1,2,1):

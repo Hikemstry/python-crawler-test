@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-HLS 下载解密主脚本（支持手动输入密钥 URL,自动重试,TS头验证,处理路径空格,合并后删除选项）
-"""
 
 import os
 import time
@@ -128,13 +125,11 @@ class HLS_Downloader:
         print("\n开始合并视频...")
         output_mp4 = os.path.join(self.WORK_DIR, f"{self.VIDEO_NAME}.mp4")
 
-        #concat demuxer（需要正确的文件列表）
         file_list = os.path.join(self.WORK_DIR, "file_list.txt")
         try:
             with open(file_list, 'w', encoding='utf-8') as f:
                 for i in range(len(decryptor.segments)):
                     ts_path = os.path.join(self.TS_DIR, f"segment_{i:05d}.ts").replace('\\', '/')
-                    #路径用引号括起来，防止空格问题
                     f.write(f"file '{ts_path}'\n")
 
             cmd = [
@@ -159,11 +154,8 @@ class HLS_Downloader:
             print(f"{colorama.Fore.RED}concat demuxer合并失败:{e}{colorama.Fore.RESET}")
             print(f"{colorama.Fore.YELLOW}\n尝试备用方法:直接合并所有TS文件(需要先进入 TS 目录)...{colorama.Fore.RESET}")
             try:
-                # 切换到 TS 目录
                 os.chdir(self.TS_DIR)
-                # 使用 copy /b 合并（Windows）
                 os.system("copy /b segment_*.ts output_temp.ts")
-                # 转封装为 MP4
                 subprocess.run([
                     "ffmpeg", "-i", "output_temp.ts", "-c", "copy",
                     os.path.join(self.WORK_DIR, f"{self.VIDEO_NAME}.mp4")

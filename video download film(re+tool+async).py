@@ -79,7 +79,7 @@ async def download_video():
         success_count = sum(results)
         print(f"TS文件下载完成: {success_count}/{len(ts_urls)} 成功")
 
-        from tool import FFmpegTool
+        from ffmpegtool import FFmpegTool
         tool = FFmpegTool()
         tool.merge_ts(ts_dir, output_name=f"{name}.mp4", delete_source=True)
 

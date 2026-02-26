@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-HLS 解密模块（支持手动指定密钥 URL,忽略 SSL 证书验证）
-依赖: requests, pycryptodome
-"""
 
 import re
 import binascii

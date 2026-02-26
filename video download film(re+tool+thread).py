@@ -75,6 +75,6 @@ print("all ts downloaded!")
 print("-----------------------------------------")
 
 """引用ffmpegtool,源代码来自tool,参考tool.py"""
-from tool import FFmpegTool
+from ffmpegtool import FFmpegTool
 tool=FFmpegTool()
 tool.merge_ts(rf"D:/image/video/{name}", output_name=f"{name}.mp4", delete_source=True)

@@ -18,12 +18,12 @@ movies download path(电影榜单下载：re)
 
 NetEase Cloud comment extraction（网易云音乐评论获取）
 
-tool（工具：与电影、电视剧下载时要同时使用）
+video download film（电影下载）
 
-video download film(video+tool)（电影下载）
-
-video download soap(video+tool)（电视剧下载）
+video download soap（电视剧下载）
 
 words translation（单词翻译）
 
 Sakura Anime （樱花动漫film电影+soap连续剧下载）
+
+tool->ffmpegtool,download_hls+hls_decryptor->unlock AES-128(Sakura Anime)

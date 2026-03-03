@@ -37,51 +37,48 @@ i = "Cze1O0OVnyI102sB"
 e = "010001"
 f = "00e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b725152b3ab17a876aea8a5aa76d2e417629ec4ee341f56135fccf695280104e0312ecbda92557c93870114af6c9d05c4f7f0c3685b7a46bee255932575cce10b424d813cfe4875d3e82047b97ddef52741d546b8e289dc6935b3ece0462db0a22b8e7"
 
-def dl(pages):                     
-    x = 1
-    y = 1
-    cursor = "-1"
+                 
+x = 1
+y = 1
+cursor = "-1"
 
 
-    for page in range(1, pages + 1, 1):
-        data = {
-            "csrf_token": "ae11f2c6709b55bde4de7d71cd952940",
-            "cursor": f"{cursor}",
-            "offset": "0",
-            "orderType": "1",             
-            "pageNo": "1",
-            "pageSize": "20",
-            "rid": "R_SO_4_186016",      
-            "threadId": "R_SO_4_186016"  
-        }
+for page in range(1, 10, 1):
+    data = {
+        "csrf_token": "ae11f2c6709b55bde4de7d71cd952940",
+        "cursor": f"{cursor}",
+        "offset": "0",
+        "orderType": "1",             
+        "pageNo": "1",
+        "pageSize": "20",
+        "rid": "R_SO_4_186016",      
+        "threadId": "R_SO_4_186016"  
+    }
 
-        url = "https://music.163.com/weapi/comment/resource/comments/get?csrf_token="
-
- 
-        resp = requests.post(
-                url,
-                data={"params": get_params(data), "encSecKey": get_encSecKey()},
-
-            )
-        dic = resp.json()
-        data_part = dic.get("data")
-        cursor = data_part.get("cursor", "-1")
-        comments = data_part.get("comments", [])
-        for j in comments:
-            id_list = []
-            time_list = []
-            like_list = []
-            con_list = []
-            id_list.append(j["user"]["nickname"])
-            time_list.append(j.get("timeStr", ""))  
-            like_list.append(j["likedCount"])
-            con_list.append(j["content"])
-
-            print(f"{id_list[0]}({time_list[0]} like:{like_list[0]} page:{x} count:{y}):\n{con_list[0]}\n")
-            y += 1
-        x += 1
+    url = "https://music.163.com/weapi/comment/resource/comments/get?csrf_token="
 
 
+    resp = requests.post(
+            url,
+            data={"params": get_params(data), "encSecKey": get_encSecKey()},
 
-with ThreadPoolExecutor(max_workers=10) as t:
-    t.submit(dl, 10)
+        )
+    dic = resp.json()
+    data_part = dic.get("data")
+    cursor = data_part.get("cursor", "-1")
+    comments = data_part.get("comments", [])
+    for j in comments:
+        id_list = []
+        time_list = []
+        like_list = []
+        con_list = []
+        id_list.append(j["user"]["nickname"])
+        time_list.append(j.get("timeStr", ""))  
+        like_list.append(j["likedCount"])
+        con_list.append(j["content"])
+
+        print(f"{id_list[0]}({time_list[0]} like:{like_list[0]} page:{x} count:{y}):\n{con_list[0]}\n")
+        y += 1
+    x += 1
+
+
